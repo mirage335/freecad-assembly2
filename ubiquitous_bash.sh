@@ -16697,6 +16697,7 @@ _test_prog() {
 _setup_prog() {
 	_messagePlain_request 'request: BEWARE: Apparently, freecad ignores or does not use entirely as expected, all variables and command line parameters, related to redirecting the "$HOME"/.FreeCAD directory or subdirectories. '
 	_messagePlain_request 'request: install and manually test assembly2 module '
+	_messagePlain_request 'request: install and manually test a2plus module '
 	
 	return 0
 }
@@ -16806,6 +16807,11 @@ _freecad-assembly2() {
 	# 2da784f18b8af16facf3c0e28a69f0430dc7bb60
 	_app "$@"
 }
+_freecad-a2plus() {
+	# https://github.com/kbwbe/A2plus
+	# caec9bc873590c3fca888ca57ba977ac9831b4d3
+	_app "$@"
+}
 _freecad-assembly4() {
 	_app "$@"
 }
@@ -16819,12 +16825,14 @@ _freecad-assembly4() {
 
 _refresh_anchors_specific() {
 	_refresh_anchors_specific_single_procedure _freecad-assembly2
+	_refresh_anchors_specific_single_procedure _freecad-a2plus
 	#_refresh_anchors_specific_single_procedure _freecad-assembly4
 }
 
 
 _refresh_anchors_user() {
 	_refresh_anchors_user_single_procedure _freecad-assembly2
+	_refresh_anchors_user_single_procedure _freecad-a2plus
 	#_refresh_anchors_user_single_procedure _freecad-assembly4
 }
 
@@ -16844,6 +16852,7 @@ _associate_anchors_request() {
 	
 	_messagePlain_request 'association: *.FCStd'
 	echo _freecad-assembly2"$ub_anchor_suffix"
+	echo _freecad-a2plus"$ub_anchor_suffix"
 	
 	#_messagePlain_request 'association: *.FCStd'
 	#echo _freecad-assembly4"$ub_anchor_suffix"
@@ -16858,6 +16867,8 @@ _refresh_anchors() {
 	
 	cp -a "$scriptAbsoluteFolder"/_anchor "$scriptAbsoluteFolder"/_freecad-assembly2
 	#cp -a "$scriptAbsoluteFolder"/_anchor "$scriptAbsoluteFolder"/_freecad-assembly4
+	
+	cp -a "$scriptAbsoluteFolder"/_anchor "$scriptAbsoluteFolder"/_freecad-a2plus
 }
 
 
