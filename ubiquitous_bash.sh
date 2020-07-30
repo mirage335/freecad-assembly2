@@ -4934,17 +4934,23 @@ _abstractfs() {
 	
 	[[ "$ubAbstractFS_enable_CLD" == 'true' ]] && [[ "$ubASD_CLD" != '' ]] && current_abstractfs_base_args+=( "$ubASD_PRJ" "$ubASD_CLD" )
 	
-	# WARNING: Enabling may allow a misplaced 'project.afs' file in "/" , "$HOME' , or similar, to override a legitimate directory.
-	# However, such a misplaced file may already cause wrong directory collisions with abstractfs.
-	# Historically not enabled by default. Consider enabling by default equivalent to at least a minor version bump - be wary of any possible broken use cases.
-	[[ "$abstractfs_projectafs_dir" != "" ]] && [[ "$ubAbstractFS_enable_projectafs_dir" == 'true' ]] && current_abstractfs_base_args+=( "$abstractfs_projectafs_dir" )
-	#[[ "$abstractfs_projectafs_dir" != "" ]] && [[ "$ubAbstractFS_enable_projectafs_dir" != 'false' ]] && current_abstractfs_base_args+=( "$abstractfs_projectafs_dir" )
-	
 	_base_abstractfs "${current_abstractfs_base_args[@]}"
 	
 	
 	_name_abstractfs > /dev/null 2>&1
 	[[ "$abstractfs_name" == "" ]] && return 1
+	
+	
+	# WARNING: Enabling may allow a misplaced 'project.afs' file in "/" , "$HOME' , or similar, to override a legitimate directory.
+	# WARNING: Conflicting 'project.afs' files may break 'scope' use cases relying on "$ubASD_CLD" or similar.
+	# However, such a misplaced file may already cause wrong directory collisions with abstractfs.
+	# Historically not enabled by default. Consider enabling by default equivalent to at least a minor version bump - be wary of any possible broken use cases.
+	if [[ "$abstractfs_projectafs" != "" ]]
+	then
+		export abstractfs_projectafs_dir=$(_getAbsoluteFolder "$abstractfs_projectafs")
+		[[ "$ubAbstractFS_enable_projectafs_dir" == 'true' ]] && current_abstractfs_base_args+=( "$abstractfs_projectafs_dir" ) && _base_abstractfs "${current_abstractfs_base_args[@]}" > /dev/null 2>&1
+		#[[ "$ubAbstractFS_enable_projectafs_dir" != 'false' ]] && current_abstractfs_base_args+=( "$abstractfs_projectafs_dir" ) && _base_abstractfs "${current_abstractfs_base_args[@]}" > /dev/null 2>&1
+	fi
 	
 	export abstractfs="$abstractfs_root"/"$abstractfs_name"
 	
@@ -16713,11 +16719,13 @@ _app_command_static() {
 	#mkdir -p "$scriptLocal"/freecad_modules_extra
 	#"$appExecutable" --module-path "$scriptLocal"/freecad_modules_extra --user-cfg "$UserParameter" --system-cfg "$SystemParameter" "$@"
 	
+	[[ ! -e "$appExecutable" ]] && return 1
+	[[ "$appExecutable" == "" ]] && return 1
+	
 	"$appExecutable" "$@"
 }
 
-#command
-_app_command() {
+_app_command-distro() {
 	# DANGER: Consistent directory naming *REQUIRED* for assembly2 projects!
 	# Force creation of 'project.afs' .
 	export afs_nofs=false
@@ -16728,8 +16736,47 @@ _app_command() {
 	export sharedGuestProjectDir=/
 	_virtUser "$@"
 	
+	export appExecutable=$(type -p freecad)
+	
+	_abstractfs _app_command_static "${processedArgs[@]}"
+}
+
+_app_command-017() {
+	# DANGER: Consistent directory naming *REQUIRED* for assembly2 projects!
+	# Force creation of 'project.afs' .
+	export afs_nofs=false
+	
+	
+	# Translate all file parameters to absolute paths. Precautionary, may or may not be necessary.
+	export sharedHostProjectDir=/
+	export sharedGuestProjectDir=/
+	_virtUser "$@"
+	
+	export appExecutable="$scriptLocal"/setups/FreeCAD-0.17.13541.9948ee4.glibc2.17-x86_64.AppImage
+	
+	_abstractfs _app_command_static "${processedArgs[@]}"
+}
+
+#command
+_app_command() {
+	# DANGER: Consistent directory naming *REQUIRED* for assembly2 projects!
+	# Force creation of 'project.afs' .
+	export afs_nofs='false'
+	export ubAbstractFS_enable_projectafs_dir='true'
+	
+	
+	# Translate all file parameters to absolute paths. Precautionary, may or may not be necessary.
+	export sharedHostProjectDir=/
+	export sharedGuestProjectDir=/
+	_virtUser "$@"
+	
 	
 	# https://forum.freecadweb.org/viewtopic.php?f=3&t=30573
+	
+	# https://github.com/FreeCAD/FreeCAD/releases/tag/0.17
+	# https://github.com/FreeCAD/FreeCAD/releases/download/0.17/FreeCAD-0.17.13541.9948ee4.glibc2.17-x86_64.AppImage
+	# FreeCAD-0.17.13541.9948ee4.glibc2.17-x86_64.AppImage
+	#export appExecutable="$scriptLocal"/setups/FreeCAD-0.17.13541.9948ee4.glibc2.17-x86_64.AppImage
 	
 	# https://github.com/FreeCAD/FreeCAD/releases/tag/0.18.4
 	# https://github.com/FreeCAD/FreeCAD/releases/download/0.18.4/FreeCAD_0.18-16146-Linux-Conda_Py3Qt5_glibc2.12-x86_64.AppImage
@@ -16817,7 +16864,52 @@ _freecad-assembly4() {
 }
 
 
+#virtualized
+_v_freecad-assembly2-017() {
+	# WARNING: Apparently, AppImage and/or freecad ignores "$HOME" variable used by "_fakeHome" in favor of either its own internal system or result from '/etc/passwd' .
+# 	_userQemu "$scriptAbsoluteLocation" _app_user "$@"
+	_userQemu "$scriptAbsoluteLocation" _app_command-017 "$@"
+}
 
+_freecad-assembly2-017() {
+	if ! _check_prog
+	then
+		_messageNormal 'Launch: _v'${FUNCNAME[0]}
+		_v${FUNCNAME[0]} "$@"
+		return
+	fi
+	
+	# WARNING: Apparently, AppImage and/or freecad ignores "$HOME" variable used by "_fakeHome" in favor of either its own internal system or result from '/etc/passwd' .
+# 	_app_user "$@" && return 0
+	_app_command-017 "$@" && return 0
+
+	#_messageNormal 'Launch: _v'${FUNCNAME[0]}
+	#_v${FUNCNAME[0]} "$@"
+}
+
+
+#virtualized
+_v_freecad-assembly2-distro() {
+	# WARNING: Apparently, AppImage and/or freecad ignores "$HOME" variable used by "_fakeHome" in favor of either its own internal system or result from '/etc/passwd' .
+# 	_userQemu "$scriptAbsoluteLocation" _app_user "$@"
+	_userQemu "$scriptAbsoluteLocation" _app_command-distro "$@"
+}
+
+_freecad-assembly2-distro() {
+	if ! _check_prog
+	then
+		_messageNormal 'Launch: _v'${FUNCNAME[0]}
+		_v${FUNCNAME[0]} "$@"
+		return
+	fi
+	
+	# WARNING: Apparently, AppImage and/or freecad ignores "$HOME" variable used by "_fakeHome" in favor of either its own internal system or result from '/etc/passwd' .
+# 	_app_user "$@" && return 0
+	_app_command-distro "$@" && return 0
+
+	#_messageNormal 'Launch: _v'${FUNCNAME[0]}
+	#_v${FUNCNAME[0]} "$@"
+}
 
 
 
@@ -16825,6 +16917,8 @@ _freecad-assembly4() {
 
 _refresh_anchors_specific() {
 	_refresh_anchors_specific_single_procedure _freecad-assembly2
+	_refresh_anchors_specific_single_procedure _freecad-assembly2-017
+	_refresh_anchors_specific_single_procedure _freecad-assembly2-distro
 	_refresh_anchors_specific_single_procedure _freecad-a2plus
 	#_refresh_anchors_specific_single_procedure _freecad-assembly4
 }
@@ -16832,6 +16926,8 @@ _refresh_anchors_specific() {
 
 _refresh_anchors_user() {
 	_refresh_anchors_user_single_procedure _freecad-assembly2
+	_refresh_anchors_user_single_procedure _freecad-assembly2-017
+	_refresh_anchors_user_single_procedure _freecad-assembly2-distro
 	_refresh_anchors_user_single_procedure _freecad-a2plus
 	#_refresh_anchors_user_single_procedure _freecad-assembly4
 }
@@ -16852,6 +16948,8 @@ _associate_anchors_request() {
 	
 	_messagePlain_request 'association: *.FCStd'
 	echo _freecad-assembly2"$ub_anchor_suffix"
+	echo _freecad-assembly2-017"$ub_anchor_suffix"
+	echo _freecad-assembly2-distro"$ub_anchor_suffix"
 	echo _freecad-a2plus"$ub_anchor_suffix"
 	
 	#_messagePlain_request 'association: *.FCStd'
@@ -16866,6 +16964,8 @@ _refresh_anchors() {
 	#cp -a "$scriptAbsoluteFolder"/_anchor "$scriptAbsoluteFolder"/_app_konsole
 	
 	cp -a "$scriptAbsoluteFolder"/_anchor "$scriptAbsoluteFolder"/_freecad-assembly2
+	cp -a "$scriptAbsoluteFolder"/_anchor "$scriptAbsoluteFolder"/_freecad-assembly2-017
+	cp -a "$scriptAbsoluteFolder"/_anchor "$scriptAbsoluteFolder"/_freecad-assembly2-distro
 	#cp -a "$scriptAbsoluteFolder"/_anchor "$scriptAbsoluteFolder"/_freecad-assembly4
 	
 	cp -a "$scriptAbsoluteFolder"/_anchor "$scriptAbsoluteFolder"/_freecad-a2plus
