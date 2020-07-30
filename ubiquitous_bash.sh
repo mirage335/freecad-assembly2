@@ -5596,6 +5596,20 @@ _write_projectAFS() {
 	testAbstractfsBase="$abstractfs_base"
 	[[ "$1" != "" ]] && testAbstractfsBase=$(_getAbsoluteLocation "$1")
 	
+	# ATTENTION: Hardcoded paths to prevent accidental creation of 'project.afs' file in user's home or similar directories
+	# Keep in mind even within a 'chroot' or similar virtualized environment, a 'project' directory would typically be used.
+	[[ "$testAbstractfsBase" == /home/"$USER" ]] && return 1
+	[[ "$testAbstractfsBase" == /home/"$USER"/ ]] && return 1
+	[[ "$testAbstractfsBase" == /root ]] && return 1
+	[[ "$testAbstractfsBase" == /root/ ]] && return 1
+	[[ "$testAbstractfsBase" == /tmp ]] && return 1
+	[[ "$testAbstractfsBase" == /tmp/ ]] && return 1
+	[[ "$testAbstractfsBase" == /dev ]] && return 1
+	[[ "$testAbstractfsBase" == /dev/ ]] && return 1
+	[[ "$testAbstractfsBase" == /dev/shm ]] && return 1
+	[[ "$testAbstractfsBase" == /dev/shm/ ]] && return 1
+	[[ "$testAbstractfsBase" == / ]] && return 1
+	
 	( [[ "$nofs" == "true" ]] || [[ "$afs_nofs" == "true" ]] || [[ "$nofs_write" == "true" ]] || [[ "$afs_nofs_write" == "true" ]] ) && return 0
 	_projectAFS_here > "$testAbstractfsBase"/project.afs
 	chmod u+x "$testAbstractfsBase"/project.afs
@@ -16728,7 +16742,8 @@ _app_command_static() {
 _app_command-distro() {
 	# DANGER: Consistent directory naming *REQUIRED* for assembly2 projects!
 	# Force creation of 'project.afs' .
-	export afs_nofs=false
+	export afs_nofs='false'
+	export ubAbstractFS_enable_projectafs_dir='true'
 	
 	
 	# Translate all file parameters to absolute paths. Precautionary, may or may not be necessary.
@@ -16744,7 +16759,8 @@ _app_command-distro() {
 _app_command-017() {
 	# DANGER: Consistent directory naming *REQUIRED* for assembly2 projects!
 	# Force creation of 'project.afs' .
-	export afs_nofs=false
+	export afs_nofs='false'
+	export ubAbstractFS_enable_projectafs_dir='true'
 	
 	
 	# Translate all file parameters to absolute paths. Precautionary, may or may not be necessary.
