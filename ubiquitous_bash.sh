@@ -16719,6 +16719,8 @@ _setup_prog() {
 	_messagePlain_request 'request: install and manually test assembly2 module '
 	_messagePlain_request 'request: install and manually test a2plus module '
 	
+	_messagePlain_request 'request: install and manually test dimensioning module '
+	
 	return 0
 }
 
