@@ -6,6 +6,9 @@ _check_prog() {
 }
 
 _test_prog() {
+	# Required for clipboard file parameter translation.
+	_testX11
+	
 	# ATTENTION: AppImage. No known dependencies.
 	#_getDep dependency
 	

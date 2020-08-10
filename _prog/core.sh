@@ -12,7 +12,13 @@ _app_command_static() {
 	[[ ! -e "$appExecutable" ]] && return 1
 	[[ "$appExecutable" == "" ]] && return 1
 	
+	#xmessage -timeout 12 "
+	#PWD=$PWD
+	#"$appExecutable" "$@"
+	#"
+	
 	"$appExecutable" "$@"
+	wait
 }
 
 _app_command-distro() {
@@ -203,6 +209,32 @@ _freecad-assembly2-distro() {
 	#_v${FUNCNAME[0]} "$@"
 }
 
+
+
+
+
+#virtualized
+_v_freecad-a2plus-distro() {
+	# WARNING: Apparently, AppImage and/or freecad ignores "$HOME" variable used by "_fakeHome" in favor of either its own internal system or result from '/etc/passwd' .
+# 	_userQemu "$scriptAbsoluteLocation" _app_user "$@"
+	_userQemu "$scriptAbsoluteLocation" _app_command-distro "$@"
+}
+
+_freecad-a2plus-distro() {
+	if ! _check_prog
+	then
+		_messageNormal 'Launch: _v'${FUNCNAME[0]}
+		_v${FUNCNAME[0]} "$@"
+		return
+	fi
+	
+	# WARNING: Apparently, AppImage and/or freecad ignores "$HOME" variable used by "_fakeHome" in favor of either its own internal system or result from '/etc/passwd' .
+# 	_app_user "$@" && return 0
+	_app_command-distro "$@" && return 0
+
+	#_messageNormal 'Launch: _v'${FUNCNAME[0]}
+	#_v${FUNCNAME[0]} "$@"
+}
 
 
 

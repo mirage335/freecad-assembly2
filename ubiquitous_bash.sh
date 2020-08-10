@@ -5587,7 +5587,151 @@ _projectAFS_here() {
 	cat << CZXWXcRMTo8EmM8i4d
 #!/usr/bin/env bash
 
+# $abstractfs_root/$abstractfs_name
+
 export abstractfs_name="$abstractfs_name"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+if [[ "\$1" != "--noexec" ]]
+then
+	
+#####
+CZXWXcRMTo8EmM8i4d
+
+
+	typeset -f _getScriptAbsoluteLocation
+	typeset -f _getScriptAbsoluteFolder
+	
+	
+	
+	typeset -f _checkBaseDirRemote_common_localOnly
+	typeset -f _checkBaseDirRemote_common_remoteOnly
+	
+	
+	
+	typeset -f _checkBaseDirRemote
+	
+	
+	
+	typeset -f _compat_realpath
+	typeset -f _compat_realpath_run
+	
+	typeset -f _getAbsoluteLocation
+	typeset -f _realpath_L_s
+	typeset -f _getAbsoluteFolder
+	
+	
+	typeset -f _findDir
+	
+	
+	
+	typeset -f _safeEcho_newline
+	
+	typeset -f _searchBaseDir
+	
+	
+	
+	typeset -f _checkBaseDirRemote
+	#_typeset -f _safeEcho_newline
+	typeset -f _safeEcho
+	
+	typeset -f _localDir
+	
+	
+	
+	#_typeset -f _safeEcho_newline
+	
+	
+	
+	#_typeset -f _safeEcho_newline
+	
+	typeset -f _slashBackToForward
+	
+	
+	
+	typeset -f _checkBaseDirRemote_app_localOnly
+	typeset -f _checkBaseDirRemote_app_remoteOnly
+	typeset -f _pathPartOf
+	typeset -f _realpath_L
+	
+	typeset -f _virtUser
+	
+	
+	
+	typeset -f _x11_clipboard_sendText
+	typeset -f _removeFilePrefix
+	
+
+cat << CZXWXcRMTo8EmM8i4d	
+	
+#####
+	cd "\$(_getScriptAbsoluteFolder)"
+	
+	
+	export standalone_abstractfs="$abstractfs_root"/"$abstractfs_name"
+	export standalone_abstractfs_base=\$(_getScriptAbsoluteFolder)
+	
+	
+	export sharedHostProjectDir="\$standalone_abstractfs_base"
+	export sharedGuestProjectDir="\$standalone_abstractfs"
+	
+	current_x11_clipboard=\$(xclip -out -selection clipboard)
+	current_x11_clipboard=\$(_removeFilePrefix "\$current_x11_clipboard")
+	_virtUser "\$current_x11_clipboard"
+	_safeEcho "\${processedArgs[@]}" | _x11_clipboard_sendText
+	
+fi
+
 CZXWXcRMTo8EmM8i4d
 }
 
@@ -16164,6 +16308,78 @@ _testarglength() {
 	_messagePASS
 }
 
+_uid_test() {
+	local current_uid_1
+	local current_uid_2
+	local current_uid_3
+	
+	current_uid_1=$(_uid)
+	current_uid_2=$(_uid)
+	current_uid_3_char=$(_uid 8 | wc -c)
+	
+	if [[ "$current_uid_1" == "" ]]
+	then
+		_messageFAIL
+		_stop 1
+	fi
+	
+	if [[ "$current_uid_2" == "" ]]
+	then
+		_messageFAIL
+		_stop 1
+	fi
+	
+	if [[ "$current_uid_1" == "$current_uid_2" ]]
+	then
+		_messageFAIL
+		_stop 1
+	fi
+	
+	if [[ "$current_uid_3_char" != "8" ]]
+	then
+		_messageFAIL
+		_stop 1
+	fi
+	
+	return 0
+}
+
+
+# Creating a function from within a function may be relied upon for some overrides.
+# Enumerating a function's text with 'typeset -f' may be relied upon by some 'here document' functions.
+_define_function_test() {
+	local current_uid_1
+	current_uid_1=$(_uid)
+	
+	local current_uid_2
+	current_uid_2=$(_uid)
+	
+	# https://stackoverflow.com/questions/7145337/bash-how-do-i-create-function-from-variable
+	eval "__$current_uid_1() { __$current_uid_2() { echo $ubiquitiousBashID; }; }"
+	
+	if [[ $(typeset -f __$current_uid_1 | wc -c) -lt 50 ]]
+	then
+		_messageFAIL
+		_stop 1
+	fi
+	
+	if [[ $(typeset -f __$current_uid_2 | wc -c) -gt 0 ]]
+	then
+		_messageFAIL
+		_stop 1
+	fi
+	
+	__$current_uid_1
+	
+	if [[ $(typeset -f __$current_uid_2 | wc -c) -lt 15 ]]
+	then
+		_messageFAIL
+		_stop 1
+	fi
+	
+	return 0
+}
+
 #_test_prog() {
 #	true
 #}
@@ -16224,6 +16440,13 @@ _test() {
 	fi
 	rm -f "$safeTmp"/working
 	rm -f "$safeTmp"/broken
+	
+	
+	
+	_uid_test
+	
+	_define_function_test
+	
 	
 	
 	# WARNING: Not tested by default, due to lack of use except where faults are tolerable, and slim possibility of useful embedded systems not able to pass.
@@ -16707,6 +16930,9 @@ _check_prog() {
 }
 
 _test_prog() {
+	# Required for clipboard file parameter translation.
+	_testX11
+	
 	# ATTENTION: AppImage. No known dependencies.
 	#_getDep dependency
 	
@@ -16738,7 +16964,13 @@ _app_command_static() {
 	[[ ! -e "$appExecutable" ]] && return 1
 	[[ "$appExecutable" == "" ]] && return 1
 	
+	#xmessage -timeout 12 "
+	#PWD=$PWD
+	#"$appExecutable" "$@"
+	#"
+	
 	"$appExecutable" "$@"
+	wait
 }
 
 _app_command-distro() {
@@ -16929,6 +17161,32 @@ _freecad-assembly2-distro() {
 	#_v${FUNCNAME[0]} "$@"
 }
 
+
+
+
+
+#virtualized
+_v_freecad-a2plus-distro() {
+	# WARNING: Apparently, AppImage and/or freecad ignores "$HOME" variable used by "_fakeHome" in favor of either its own internal system or result from '/etc/passwd' .
+# 	_userQemu "$scriptAbsoluteLocation" _app_user "$@"
+	_userQemu "$scriptAbsoluteLocation" _app_command-distro "$@"
+}
+
+_freecad-a2plus-distro() {
+	if ! _check_prog
+	then
+		_messageNormal 'Launch: _v'${FUNCNAME[0]}
+		_v${FUNCNAME[0]} "$@"
+		return
+	fi
+	
+	# WARNING: Apparently, AppImage and/or freecad ignores "$HOME" variable used by "_fakeHome" in favor of either its own internal system or result from '/etc/passwd' .
+# 	_app_user "$@" && return 0
+	_app_command-distro "$@" && return 0
+
+	#_messageNormal 'Launch: _v'${FUNCNAME[0]}
+	#_v${FUNCNAME[0]} "$@"
+}
 
 
 
